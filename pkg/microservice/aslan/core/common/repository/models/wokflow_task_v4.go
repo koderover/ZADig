@@ -255,6 +255,14 @@ type JobTaskHelmDeploySpec struct {
 	ReplaceResources   []Resource               `bson:"replace_resources"                json:"replace_resources"                   yaml:"replace_resources"`
 }
 
+func (j *JobTaskHelmDeploySpec) DeployImages() []string {
+	images := make([]string, 0)
+	for _, imageAndModule := range j.ImageAndModules {
+		images = append(images, imageAndModule.Image)
+	}
+	return images
+}
+
 type JobTaskHelmChartDeploySpec struct {
 	Env                string           `bson:"env"                              json:"env"                                 yaml:"env"`
 	DeployHelmChart    *DeployHelmChart `bson:"deploy_helm_chart"       yaml:"deploy_helm_chart"          json:"deploy_helm_chart"`

@@ -98,7 +98,7 @@ func GetEnvServiceVersionYaml(ctx *internalhandler.Context, projectName, envName
 		resp.Yaml = parsedYaml
 		resp.VariableYaml = envSvcRevision.Service.Render.GetOverrideYaml()
 	} else if envSvcRevision.Service.Type == setting.HelmDeployType {
-		resp.VariableYaml, err = kube.GeneMergedValues(envSvcRevision.Service, envSvcRevision.Service.GetServiceRender(), envSvcRevision.DefaultValues, nil, true)
+		resp.VariableYaml, _, err = helmservice.NewHelmDeployService().NewGeneMergedValues(envSvcRevision.Service, envSvcRevision.DefaultValues)
 		if err != nil {
 			return resp, e.ErrDiffEnvServiceVersions.AddErr(fmt.Errorf("failed to merged values for %s/%s/%s service for version %d, isProduction %v, error: %v", projectName, envName, serviceName, revision, isProduction, err))
 		}
@@ -358,7 +358,7 @@ func RollbackEnvServiceVersion(ctx *internalhandler.Context, projectName, envNam
 		envSvcVersion.Service.GetServiceRender().OverrideValues = ""
 		env.DefaultValues = ""
 
-		err = kube.UpgradeHelmRelease(env, envSvcVersion.Service, svcTmpl, nil, 0, ctx.UserName)
+		err = kube.DeploySingleHelmRelease(env, envSvcVersion.Service, svcTmpl, 0, ctx.UserName)
 		if err != nil {
 			return e.ErrRollbackEnvServiceVersion.AddErr(fmt.Errorf("failed to upgrade helm release for env %s, service %s, revision %d, error: %v", envSvcVersion.EnvName, envSvcVersion.Service.ServiceName, envSvcVersion.Service.Revision, err))
 		}

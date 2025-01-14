@@ -28,6 +28,7 @@ import (
 	"github.com/koderover/zadig/v2/pkg/microservice/aslan/core/common/repository/models"
 	commonrepo "github.com/koderover/zadig/v2/pkg/microservice/aslan/core/common/repository/mongodb"
 	commonservice "github.com/koderover/zadig/v2/pkg/microservice/aslan/core/common/service"
+	helmservice "github.com/koderover/zadig/v2/pkg/microservice/aslan/core/common/service/helm"
 	"github.com/koderover/zadig/v2/pkg/microservice/aslan/core/common/service/kube"
 	"github.com/koderover/zadig/v2/pkg/microservice/aslan/core/common/service/repository"
 	commonutil "github.com/koderover/zadig/v2/pkg/microservice/aslan/core/common/util"
@@ -68,7 +69,12 @@ func updateContainerForHelmChart(username, serviceName, image, containerName str
 		return err
 	}
 
-	err = kube.UpgradeHelmRelease(product, targetProductService, serviceObj, []string{image}, 0, username)
+	targetProductService, err = helmservice.NewHelmDeployService().MergedContainerImage(targetProductService, []string{image})
+	if err != nil {
+		return fmt.Errorf("failed to merge container image, err: %s", err.Error())
+	}
+
+	err = kube.DeploySingleHelmRelease(product, targetProductService, serviceObj, 0, username)
 	if err != nil {
 		return fmt.Errorf("failed to upgrade helm release, err: %s", err.Error())
 	}
